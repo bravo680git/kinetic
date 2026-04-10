@@ -1,0 +1,15 @@
+.git
+.gitignore
+.dockerignore
+.env
+.env.local
+node_modules
+dist
+build
+tmp
+.DS_Store
+*.log
+.vscode
+.idea
+.air.toml
+backend/kinetic

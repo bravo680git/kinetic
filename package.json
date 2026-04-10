@@ -1,0 +1,13 @@
+{
+  "name": "kinetic",
+  "version": "0.1.0",
+  "description": "Kinetic - Web SQL Tool",
+  "private": true,
+  "scripts": {
+    "dev": "./dev.sh",
+    "build": "cd frontend && pnpm run build && cd ../backend && go build -o kinetic . && cd ..",
+    "docker:build": "docker build -t kinetic:latest .",
+    "docker:run": "docker run -p 8080:8080 kinetic:latest",
+    "docker:push": "docker tag kinetic:latest kinetic:latest && docker push kinetic:latest"
+  }
+}
