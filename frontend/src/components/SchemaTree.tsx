@@ -148,7 +148,7 @@ export function SchemaTree({ schema, onTableClick }: SchemaTreeProps) {
 
   return (
     <div className="bg-bg-surface p-4 overflow-y-auto h-full">
-      {schema.schemas.map((schemaMeta) => (
+      {schema.schemas?.map((schemaMeta) => (
         <div key={schemaMeta.name} className="mb-4">
           <div className="flex items-center gap-2 text-text-primary font-semibold mb-2">
             <Database size={16} />

@@ -21,7 +21,7 @@ function getColumnsMeta(
   schema: SchemaResponse | null | undefined,
   tableName: string | undefined,
 ): Record<string, ColumnMeta> | null {
-  if (!schema || !tableName) return null;
+  if (!schema || !schema.schemas || !tableName) return null;
   for (const schemaMeta of schema.schemas) {
     for (const table of schemaMeta.tables) {
       if (table.name === tableName) {

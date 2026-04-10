@@ -22,13 +22,15 @@ export function createSqlCompletionProvider(
       const tables = new Set<string>();
       const columns: Record<string, { name: string; type: string }[]> = {};
 
-      for (const schemaMeta of schema.schemas) {
-        for (const table of schemaMeta.tables) {
-          tables.add(table.name);
-          columns[table.name] = table.columns.map((c) => ({
-            name: c.name,
-            type: c.type,
-          }));
+      if (schema.schemas) {
+        for (const schemaMeta of schema.schemas) {
+          for (const table of schemaMeta.tables) {
+            tables.add(table.name);
+            columns[table.name] = table.columns.map((c) => ({
+              name: c.name,
+              type: c.type,
+            }));
+          }
         }
       }
 

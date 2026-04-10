@@ -43,7 +43,7 @@ export interface SchemaMeta {
  */
 export interface SchemaResponse {
   dialect: "postgres";
-  schemas: SchemaMeta[];
+  schemas?: SchemaMeta[];
 }
 
 /**
