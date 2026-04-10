@@ -71,7 +71,7 @@ export function QueryResultTabs({
           <ChevronUp size={20} className="text-text-secondary" />
         </button>
       )}
-      <div className="flex items-center bg-bg-secondary border-b border-border px-2 py-0 h-10 flex-shrink-0 gap-2">
+      <div className="flex items-center bg-bg-secondary border-b border-border px-2 py-0 h-10 shrink-0 gap-2">
         {!isCollapsed && (
           <button
             className="p-1 hover:bg-bg-surface rounded transition-colors"
@@ -97,7 +97,7 @@ export function QueryResultTabs({
                 {tab.title}
               </span>
               {tab.loading && (
-                <div className="w-3 h-3 rounded-full border-2 border-accent border-t-transparent animate-spin flex-shrink-0" />
+                <div className="w-3 h-3 rounded-full border-2 border-accent border-t-transparent animate-spin shrink-0" />
               )}
               <button
                 className="p-1 hover:bg-bg-secondary rounded transition-colors"
@@ -114,7 +114,7 @@ export function QueryResultTabs({
 
         {tabs.length > 0 && (
           <button
-            className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary rounded transition-colors hover:bg-bg-base flex-shrink-0"
+            className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary rounded transition-colors hover:bg-bg-base shrink-0"
             onClick={onCloseAll}
           >
             Close All

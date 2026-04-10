@@ -15,9 +15,9 @@ export function TopBar({
   setIsSidebarCollapsed,
 }: TopBarProps) {
   const statusColors = {
-    connected: "bg-status-success",
+    connected: "bg-success",
     disconnected: "bg-gray-500",
-    error: "bg-status-error",
+    error: "bg-error",
   };
 
   return (

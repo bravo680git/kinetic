@@ -1,4 +1,5 @@
 import { useSettings } from "@/hooks/useSettings";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import debounce from "lodash.debounce";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -153,95 +154,95 @@ function App() {
   }
 
   return (
-    <div className="w-screen h-screen flex flex-col bg-bg-base text-text-primary">
-      <TopBar
-        connectionStatus={connectionStatus}
-        onSettingsClick={() => setSettingsModalOpen(true)}
-        isSidebarCollapsed={isSidebarCollapsed}
-        setIsSidebarCollapsed={handleSidebarCollapse}
-      />
+    <Tooltip.Provider>
+      <div className="w-screen h-screen flex flex-col bg-bg-base text-text-primary">
+        <TopBar
+          connectionStatus={connectionStatus}
+          onSettingsClick={() => setSettingsModalOpen(true)}
+          isSidebarCollapsed={isSidebarCollapsed}
+          setIsSidebarCollapsed={handleSidebarCollapse}
+        />
 
-      <div className="flex flex-1 min-h-0">
-        <div
-          className={`${
-            isSidebarCollapsed ? "w-0" : "w-60"
-          } flex-shrink-0 border-r border-border overflow-hidden flex flex-col transition-all duration-300 ease-in-out`}
-        >
-          <ConnectionsList
-            selectedConnId={selectedConn?.id || null}
-            onSelectConnection={setSelectedConn}
-            onConnect={handleConnect}
-            onNewConnection={handleNewConnection}
-            onEditConnection={handleEditConnection}
-            isConnected={!!schema}
-            connectedConnStr={connStr}
-            refreshKey={refreshConnections}
-          />
-          <div className="flex-1 overflow-hidden">
-            {schema && <SchemaTree schema={schema} />}
+        <div className="flex flex-1 min-h-0">
+          <div
+            className={`${
+              isSidebarCollapsed ? "w-0" : "w-60"
+            } shrink-0 border-r border-border overflow-hidden flex flex-col transition-all duration-300 ease-in-out`}
+          >
+            <ConnectionsList
+              selectedConnId={selectedConn?.id || null}
+              onSelectConnection={setSelectedConn}
+              onConnect={handleConnect}
+              onNewConnection={handleNewConnection}
+              onEditConnection={handleEditConnection}
+              refreshKey={refreshConnections}
+            />
+            <div className="flex-1 overflow-hidden">
+              {schema && <SchemaTree schema={schema} />}
+            </div>
+          </div>
+
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <Group orientation="vertical" onLayoutChanged={updatePanelSize}>
+              <Panel
+                minSize={20}
+                defaultSize={100 - resultPanelSize}
+                className="flex flex-col min-h-0 overflow-hidden"
+              >
+                {schema && <SqlEditor onRun={handleRunQuery} schema={schema} />}
+              </Panel>
+              <Separator className="h-1 bg-border hover:bg-accent transition-colors" />
+              <Panel
+                panelRef={resultsPanelRef}
+                defaultSize={resultPanelSize}
+                minSize={10}
+                collapsible
+                className="flex flex-col min-h-0 overflow-hidden"
+              >
+                <QueryResultTabs
+                  tabs={tabs}
+                  activeTab={activeTab}
+                  onSelectTab={setActive}
+                  onCloseTab={closeTab}
+                  onCloseAll={closeAllTabs}
+                  isCollapsed={isResultsPanelCollapsed}
+                  setIsCollapsed={handleResultPanelCollapse}
+                  connectionString={connStr}
+                  schema={schema}
+                  onRefreshQuery={() => rerunActiveTab(connStr)}
+                />
+              </Panel>
+            </Group>
           </div>
         </div>
 
-        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          <Group orientation="vertical" onLayoutChanged={updatePanelSize}>
-            <Panel
-              minSize={20}
-              defaultSize={100 - resultPanelSize}
-              className="flex flex-col min-h-0 overflow-hidden"
-            >
-              {schema && <SqlEditor onRun={handleRunQuery} schema={schema} />}
-            </Panel>
-            <Separator className="h-1 bg-border hover:bg-accent transition-colors" />
-            <Panel
-              panelRef={resultsPanelRef}
-              defaultSize={resultPanelSize}
-              minSize={10}
-              collapsible
-              className="flex flex-col min-h-0 overflow-hidden"
-            >
-              <QueryResultTabs
-                tabs={tabs}
-                activeTab={activeTab}
-                onSelectTab={setActive}
-                onCloseTab={closeTab}
-                onCloseAll={closeAllTabs}
-                isCollapsed={isResultsPanelCollapsed}
-                setIsCollapsed={handleResultPanelCollapse}
-                connectionString={connStr}
-                schema={schema}
-                onRefreshQuery={() => rerunActiveTab(connStr)}
-              />
-            </Panel>
-          </Group>
-        </div>
+        <ConnectionModal
+          isOpen={modalOpen}
+          onClose={handleModalClose}
+          onConnect={handleConnect}
+          onSave={handleConnectionSave}
+          mode={modalMode}
+          connection={editingConn}
+        />
+
+        <SettingsModal
+          isOpen={settingsModalOpen}
+          onClose={() => setSettingsModalOpen(false)}
+        />
+
+        <ToastContainer
+          position="bottom-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </div>
-
-      <ConnectionModal
-        isOpen={modalOpen}
-        onClose={handleModalClose}
-        onConnect={handleConnect}
-        onSave={handleConnectionSave}
-        mode={modalMode}
-        connection={editingConn}
-      />
-
-      <SettingsModal
-        isOpen={settingsModalOpen}
-        onClose={() => setSettingsModalOpen(false)}
-      />
-
-      <ToastContainer
-        position="bottom-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-    </div>
+    </Tooltip.Provider>
   );
 }
 

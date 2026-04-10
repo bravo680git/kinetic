@@ -137,7 +137,7 @@ const EditToolbar = memo(function EditToolbar({
         </span>
         <div className="flex items-center gap-3">
           {queryResult.truncated && (
-            <span className="px-2 py-1 bg-status-warning/20 text-status-warning rounded text-xs font-medium">
+            <span className="px-2 py-1 bg-warning/20 text-warning rounded text-xs font-medium">
               Truncated (limit: {queryResult.row_count})
             </span>
           )}
@@ -210,7 +210,7 @@ const EditToolbar = memo(function EditToolbar({
         <button
           onClick={onApply}
           disabled={isSaving || !pkColumn}
-          className="px-3 py-1 rounded bg-status-success/20 hover:bg-status-success/30 text-status-success font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 rounded bg-success/20 hover:bg-success/30 text-success font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Check size={14} />
           {isSaving ? "Saving..." : "Apply"}
@@ -218,7 +218,7 @@ const EditToolbar = memo(function EditToolbar({
         <button
           onClick={onCancel}
           disabled={isSaving}
-          className="px-3 py-1 rounded bg-status-error/20 hover:bg-status-error/30 text-status-error font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 rounded bg-error/20 hover:bg-error/30 text-error font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <X size={14} />
           Cancel
@@ -373,7 +373,14 @@ export function ResultGrid({
     } finally {
       setIsSaving(false);
     }
-  }, [queryResult, tableName, pkColumn, editingData, connectionString, onSaveSuccess]);
+  }, [
+    queryResult,
+    tableName,
+    pkColumn,
+    editingData,
+    connectionString,
+    onSaveSuccess,
+  ]);
 
   const parseValue = (value: string): unknown => {
     if (value.toLowerCase() === "null") return null;
@@ -462,16 +469,11 @@ export function ResultGrid({
   if (error) {
     return (
       <div className="flex-1 flex items-center justify-center bg-bg-base min-h-0 p-4">
-        <div className="flex items-start gap-3 px-4 py-3 bg-status-error/10 border border-status-error/20 rounded-md max-w-md">
-          <AlertCircle
-            size={20}
-            className="text-status-error flex-shrink-0 mt-0.5"
-          />
+        <div className="flex items-start gap-3 px-4 py-3 bg-error/10 border border-error/20 rounded-md max-w-md">
+          <AlertCircle size={20} className="text-error shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm text-status-error font-semibold">
-              Query Error
-            </p>
-            <p className="text-xs text-status-error/90 mt-1">{error}</p>
+            <p className="text-sm text-error font-semibold">Query Error</p>
+            <p className="text-xs text-error/90 mt-1">{error}</p>
           </div>
         </div>
       </div>
@@ -554,9 +556,9 @@ export function ResultGrid({
         </table>
       </div>
 
-      <div className="sticky bottom-0 flex flex-col border-t border-border bg-bg-surface z-10 flex-shrink-0">
+      <div className="sticky bottom-0 flex flex-col border-t border-border bg-bg-surface z-10 shrink-0">
         {editingError && (
-          <div className="px-4 py-2 bg-status-error/10 border-b border-status-error/20 text-xs text-status-error">
+          <div className="px-4 py-2 bg-error/10 border-b border-error/20 text-xs text-error">
             {editingError}
           </div>
         )}

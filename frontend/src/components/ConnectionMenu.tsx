@@ -1,14 +1,5 @@
-import {
-  flip,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from "@floating-ui/react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Edit2, MoreVertical, Plug, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { type SavedConnection } from "../lib/connections";
 
 interface ConnectionMenuProps {
@@ -24,71 +15,48 @@ export function ConnectionMenu({
   onEdit,
   onDelete,
 }: ConnectionMenuProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const { refs, floatingStyles, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement: "bottom-end",
-    middleware: [offset(8), flip(), shift({ padding: 8 })],
-  });
-
-  const click = useClick(context);
-  const dismiss = useDismiss(context);
-  const { getReferenceProps, getFloatingProps } = useInteractions([
-    click,
-    dismiss,
-  ]);
-
   return (
-    <>
-      <button
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        className="p-1.5 hover:bg-bg-base rounded transition-colors"
-        title="Menu"
-      >
-        <MoreVertical size={14} className="text-text-secondary" />
-      </button>
-
-      {isOpen && (
-        <div
-          ref={refs.setFloating}
-          style={floatingStyles}
-          {...getFloatingProps()}
-          className="bg-bg-elevated border border-border rounded-md shadow-lg z-50 min-w-max"
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          className="p-1.5 hover:bg-bg-base rounded transition-colors 
+            focus-visible:border-none focus-visible:outline-none"
+          title="Menu"
         >
-          <button
-            onClick={() => {
-              onConnect(connection);
-              setIsOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2 hover:bg-bg-base transition-colors text-sm text-text-primary rounded-t-md"
+          <MoreVertical size={14} className="text-text-secondary" />
+        </button>
+      </DropdownMenu.Trigger>
+
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          className="bg-bg-elevated border border-border rounded-md shadow-lg z-50 min-w-max"
+          sideOffset={8}
+        >
+          <DropdownMenu.Item
+            onSelect={() => onConnect(connection)}
+            className="flex items-center gap-2 px-4 py-2 hover:bg-bg-base transition-colors text-sm text-text-primary cursor-pointer rounded-t-md focus:outline-none"
           >
             <Plug size={14} className="text-accent" />
             Connect
-          </button>
-          <button
-            onClick={() => {
-              onEdit(connection);
-              setIsOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2 hover:bg-bg-base transition-colors text-sm text-text-primary"
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item
+            onSelect={() => onEdit(connection)}
+            className="flex items-center gap-2 px-4 py-2 hover:bg-bg-base transition-colors text-sm text-text-primary cursor-pointer focus:outline-none"
           >
             <Edit2 size={14} className="text-text-secondary" />
             Edit
-          </button>
-          <button
-            onClick={() => {
-              onDelete(connection.id);
-              setIsOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2 hover:bg-status-error/10 transition-colors text-sm text-status-error rounded-b-md"
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item
+            onSelect={() => onDelete(connection.id)}
+            className="flex items-center gap-2 px-4 py-2 hover:bg-error/10 transition-colors text-sm text-error cursor-pointer rounded-b-md focus:outline-none"
           >
-            <Trash2 size={14} />
+            <Trash2 size={14} className="text-error" />
             Delete
-          </button>
-        </div>
-      )}
-    </>
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
