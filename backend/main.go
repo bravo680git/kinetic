@@ -21,6 +21,9 @@ var frontend embed.FS
 func main() {
 	r := gin.Default()
 
+	// Load snippets at startup
+	handlers.LoadSnippets()
+
 	// Apply timeout middleware to all API routes
 	apiGroup := r.Group("/api", middleware.TimeoutMiddleware())
 	{
@@ -30,6 +33,9 @@ func main() {
 		apiGroup.POST("/connections/test", handlers.TestConnection)
 		apiGroup.GET("/config", handlers.GetConfig)
 		apiGroup.POST("/config", handlers.SetConfig)
+		apiGroup.GET("/snippets", handlers.GetSnippets)
+		apiGroup.POST("/snippets", handlers.SetSnippets)
+		apiGroup.POST("/snippets/reset", handlers.ResetSnippets)
 	}
 
 	// Serve embedded frontend assets

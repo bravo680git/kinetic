@@ -1,30 +1,23 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { AlertCircle, CheckCircle, XIcon, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { testConnection as testConnectionApi } from "../lib/api";
 import {
   deleteConnection,
   saveConnection,
   type SavedConnection,
 } from "../lib/connections";
+import { useUIStore } from "../stores/ui";
+import { useConnectionStore } from "@/stores/connection";
+import { useSchemaStore } from "@/stores/schema";
 
-interface ConnectionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConnect?: (connStr: string) => void;
-  mode?: "add" | "edit";
-  connection?: SavedConnection | null;
-  onSave?: () => void;
-}
-
-export function ConnectionModal({
-  isOpen,
-  onClose,
-  onConnect,
-  mode = "add",
-  connection,
-  onSave,
-}: ConnectionModalProps) {
+export function ConnectionModal() {
+  const { connectionModal, closeConnectionModal } = useUIStore();
+  const { triggerRefresh, setConnStr: storeSetConnStr } = useConnectionStore();
+  const isOpen = connectionModal !== null;
+  const mode = connectionModal?.mode || "add";
+  const connection = connectionModal?.connection || null;
   const [displayName, setDisplayName] = useState("");
   const [connStr, setConnStr] = useState("");
   const [testResult, setTestResult] = useState<{
@@ -64,6 +57,8 @@ export function ConnectionModal({
     }
   };
 
+  const handleSave = async () => {};
+
   const handleConnect = async () => {
     if (!connStr) {
       return;
@@ -72,15 +67,24 @@ export function ConnectionModal({
       deleteConnection(connection.id);
     }
     saveConnection(displayName, connStr);
-    if (mode === "add" && onConnect) {
-      onConnect(connStr);
-    } else if (mode === "edit" && onSave) {
-      onSave();
+    if (mode === "add") {
+      const { connect } = useSchemaStore.getState();
+      try {
+        await connect(connStr);
+        storeSetConnStr(connStr);
+        triggerRefresh();
+        toast.success(`Connected to ${displayName || "database"}`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to connect");
+        return;
+      }
+    } else if (mode === "edit") {
+      triggerRefresh();
     }
     setDisplayName("");
     setConnStr("");
     setTestResult(null);
-    onClose();
+    closeConnectionModal();
   };
 
   if (!isOpen) return null;
@@ -92,7 +96,7 @@ export function ConnectionModal({
     displayName.trim() && connStr.trim() && (isEditMode || testResult?.ok);
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={onClose}>
+    <Dialog.Root open={isOpen} onOpenChange={closeConnectionModal}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 z-40" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-150 -translate-x-1/2 -translate-y-1/2 border border-border rounded-lg bg-bg-elevated p-6 shadow-lg">
@@ -175,7 +179,7 @@ export function ConnectionModal({
               </button>
             )}
             <button
-              onClick={onClose}
+              onClick={closeConnectionModal}
               className="flex-1 px-3 py-2 border border-border text-text-primary rounded-md hover:bg-bg-base transition-colors"
             >
               Cancel

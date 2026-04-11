@@ -1,15 +1,12 @@
 import { EntityContextType, PostgreSQL } from "dt-sql-parser";
 import * as monaco from "monaco-editor";
-import { SchemaResponse } from "../../../shared/types";
-import { getCategoryFromKey, sqlSnippets } from "../../../shared/sqlSnippets";
+import { SchemaResponse, SnippetsConfig } from "../../../shared/types";
+import { getCategoryFromKey } from "../../../shared/sqlSnippets";
 
-export function createSqlCompletionProvider(
-  getSchema: () => SchemaResponse | null,
-): monaco.languages.CompletionItemProvider {
-  const parser = new PostgreSQL();
-
-  // Prepare snippets for autocomplete
-  const snippetSuggestions = Object.entries(sqlSnippets).map(([key, value]) => {
+function buildSnippetSuggestions(
+  snippets: SnippetsConfig,
+): Omit<monaco.languages.CompletionItem, "range">[] {
+  return Object.entries(snippets).map(([key, value]) => {
     const category = getCategoryFromKey(key);
     return {
       label: key,
@@ -24,6 +21,13 @@ export function createSqlCompletionProvider(
       sortText: `0_${key}`, // Show snippets first (0 prefix sorts before 1 and 2)
     };
   });
+}
+
+export function createSqlCompletionProvider(
+  getSchema: () => SchemaResponse | null,
+  getSnippets: () => SnippetsConfig,
+): monaco.languages.CompletionItemProvider {
+  const parser = new PostgreSQL();
 
   return {
     triggerCharacters: [".", " ", "(", ","],
@@ -32,6 +36,11 @@ export function createSqlCompletionProvider(
       position: monaco.Position,
     ): monaco.languages.ProviderResult<monaco.languages.CompletionList> {
       const schema = getSchema();
+      const snippets = getSnippets();
+
+      // Prepare snippets for autocomplete
+      const snippetSuggestions = buildSnippetSuggestions(snippets);
+
       if (!schema) {
         return { suggestions: [], incomplete: false };
       }
@@ -146,8 +155,6 @@ export function createSqlCompletionProvider(
         if (!result) {
           return { suggestions: [], incomplete: false };
         }
-
-        // Extract context from syntax suggestions
         const contextTypes = new Set<string>();
 
         if (result.syntax) {

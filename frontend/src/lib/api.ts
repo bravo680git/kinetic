@@ -8,6 +8,7 @@ import {
   Config,
   UpdateRowRequest,
   UpdateRowResponse,
+  SnippetsConfig,
 } from "../../../shared/types";
 
 const API_BASE = "/api";
@@ -83,5 +84,24 @@ export async function updateConfig(req: Config): Promise<Config> {
   return apiCall<Config>("/config", {
     method: "POST",
     body: JSON.stringify(req),
+  });
+}
+
+export async function fetchSnippets(): Promise<SnippetsConfig> {
+  return apiCall<SnippetsConfig>("/snippets");
+}
+
+export async function updateSnippets(
+  snippets: SnippetsConfig,
+): Promise<SnippetsConfig> {
+  return apiCall<SnippetsConfig>("/snippets", {
+    method: "POST",
+    body: JSON.stringify(snippets),
+  });
+}
+
+export async function resetSnippets(): Promise<SnippetsConfig> {
+  return apiCall<SnippetsConfig>("/snippets/reset", {
+    method: "POST",
   });
 }

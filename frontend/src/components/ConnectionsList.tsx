@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { ChevronRight, Plug, PlugIcon, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { useConfirmModal } from "../hooks/useConfirmModal";
 import {
   deleteConnection,
@@ -8,27 +9,23 @@ import {
   type SavedConnection,
 } from "../lib/connections";
 import { ConnectionMenu } from "./ConnectionMenu";
+import { useUIStore } from "@/stores/ui";
+import { useConnectionStore } from "@/stores/connection";
+import { useSchemaStore } from "@/stores/schema";
 
-interface ConnectionsListProps {
-  selectedConnId: string | null;
-  onSelectConnection: (conn: SavedConnection) => void;
-  onConnect: (connStr: string) => void;
-  onNewConnection: () => void;
-  onEditConnection: (conn: SavedConnection) => void;
-  refreshKey?: number;
-}
-
-export function ConnectionsList({
-  selectedConnId,
-  onSelectConnection,
-  onConnect,
-  onNewConnection,
-  onEditConnection,
-  refreshKey,
-}: ConnectionsListProps) {
+export function ConnectionsList() {
   const [expanded, setExpanded] = useState(true);
   const [connections, setConnections] = useState(getSavedConnections());
   const { modal: deleteModal, contextHolder } = useConfirmModal();
+  const { openConnectionModal } = useUIStore();
+  const {
+    refreshKey,
+    selectedConn,
+    setSelectedConn,
+    setConnStr,
+    triggerRefresh,
+  } = useConnectionStore();
+  const selectedConnId = selectedConn?.id || null;
 
   useEffect(() => {
     setConnections(getSavedConnections());
@@ -48,9 +45,21 @@ export function ConnectionsList({
     });
   };
 
-  const handleConnect = (conn: SavedConnection) => {
-    onSelectConnection(conn);
-    onConnect(conn.connectionString);
+  const handleConnect = async (conn: SavedConnection) => {
+    setSelectedConn(conn);
+    const { connect } = useSchemaStore.getState();
+    try {
+      await connect(conn.connectionString);
+      setConnStr(conn.connectionString);
+      triggerRefresh();
+      toast.success(`Connected to ${conn.name}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to connect");
+    }
+  };
+
+  const handleNewConnection = () => {
+    openConnectionModal("add");
   };
 
   return (
@@ -72,14 +81,10 @@ export function ConnectionsList({
             </span>
           </div>
           <button
-            onClick={onNewConnection}
+            onClick={handleNewConnection}
             className="ml-auto p-1.5 hover:bg-bg-elevated rounded transition-colors"
           >
-            <Plus
-              onClick={onNewConnection}
-              size={16}
-              className="text-accent shrink-0"
-            />
+            <Plus size={16} className="text-accent shrink-0" />
           </button>
         </div>
 
@@ -117,7 +122,7 @@ export function ConnectionsList({
                     <ConnectionMenu
                       connection={conn}
                       onConnect={() => handleConnect(conn)}
-                      onEdit={() => onEditConnection(conn)}
+                      onEdit={() => openConnectionModal("edit", conn)}
                       onDelete={() => handleDeleteConnection(conn.id)}
                     />
                   </div>

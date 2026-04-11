@@ -4,8 +4,9 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { toast } from "react-toastify";
 import { GeneralTab } from "./GeneralTab";
 import { QueryTab } from "./QueryTab";
-import { SettingsModalProps, SettingsTab, TabConfig } from "./types";
+import { SettingsTab, TabConfig } from "./types";
 import { useSettings } from "../../hooks/useSettings";
+import { useUIStore } from "../../stores/ui";
 
 const TABS: TabConfig[] = [
   {
@@ -22,7 +23,8 @@ const TABS: TabConfig[] = [
   },
 ];
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export function SettingsModal() {
+  const { settingsModalOpen, closeSettingsModal } = useUIStore();
   const { loading, error, loadConfig, saveConfig, config } = useSettings();
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const [saving, setSaving] = useState(false);
@@ -32,10 +34,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   }, [activeTab]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (settingsModalOpen) {
       loadConfig();
     }
-  }, [isOpen, loadConfig]);
+  }, [settingsModalOpen, loadConfig]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -43,14 +45,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setSaving(false);
     if (success) {
       toast.success("Settings saved successfully");
-      onClose();
+      closeSettingsModal();
     } else {
       toast.error("Failed to save settings");
     }
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={onClose}>
+    <Dialog.Root open={settingsModalOpen} onOpenChange={closeSettingsModal}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 z-40" />
         <Dialog.Content
@@ -104,7 +106,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               {/* Footer */}
               <div className="shrink-0 border-t border-border px-6 py-4 flex gap-2 justify-end">
                 <button
-                  onClick={onClose}
+                  onClick={closeSettingsModal}
                   className="px-4 py-2 rounded bg-bg-elevated border border-border text-text-primary hover:bg-bg-base transition-colors"
                 >
                   Close

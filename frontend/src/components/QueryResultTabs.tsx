@@ -1,21 +1,10 @@
 import { ChevronDown, ChevronUp, X } from "lucide-react";
-import type { QueryTab } from "../types/tabs";
-import type { SchemaResponse, ColumnMeta } from "../../../shared/types";
-import { ResultGrid } from "./ResultGrid";
+import type { ColumnMeta, SchemaResponse } from "../../../shared/types";
 import { extractTableNameFromQuery } from "../lib/query";
-
-interface QueryResultTabsProps {
-  tabs: QueryTab[];
-  activeTab: QueryTab | null;
-  onSelectTab: (tabId: string) => void;
-  onCloseTab: (tabId: string) => void;
-  onCloseAll: () => void;
-  isCollapsed?: boolean;
-  setIsCollapsed?: (collapsed: boolean) => void;
-  connectionString?: string;
-  schema?: SchemaResponse | null;
-  onRefreshQuery?: () => void;
-}
+import { useUIStore } from "../stores/ui";
+import { useSchemaStore } from "../stores/schema";
+import { useQueryTabsStore } from "../stores/queryTabs";
+import { ResultGrid } from "./ResultGrid";
 
 function getColumnsMeta(
   schema: SchemaResponse | null | undefined,
@@ -38,18 +27,20 @@ function getColumnsMeta(
   return null;
 }
 
-export function QueryResultTabs({
-  tabs,
-  activeTab,
-  onSelectTab,
-  onCloseTab,
-  onCloseAll,
-  isCollapsed = false,
-  setIsCollapsed = () => {},
-  connectionString = "",
-  schema = null,
-  onRefreshQuery,
-}: QueryResultTabsProps) {
+export function QueryResultTabs() {
+  const tabs = useQueryTabsStore((state) => state.tabs);
+  const activeTabId = useQueryTabsStore((state) => state.activeTabId);
+  const { setActive, closeTab, closeAllTabs, rerunActiveTab } =
+    useQueryTabsStore();
+  const schema = useSchemaStore((state) => state.schema);
+  const activeTab = tabs.find((t) => t.id === activeTabId) || null;
+
+  const { isResultsPanelCollapsed, setResultsPanelCollapsed } = useUIStore();
+
+  const handleResultPanelCollapse = (collapsed: boolean) => {
+    setResultsPanelCollapsed(collapsed);
+  };
+
   if (tabs.length === 0) {
     return (
       <div className="flex items-center justify-center h-full bg-bg-base">
@@ -62,20 +53,20 @@ export function QueryResultTabs({
 
   return (
     <div className="flex flex-col min-h-0 overflow-hidden bg-bg-base h-full">
-      {isCollapsed && (
+      {isResultsPanelCollapsed && (
         <button
           className="p-1 hover:bg-bg-base rounded transition-colors fixed bottom-1 z-20"
-          onClick={() => setIsCollapsed(false)}
+          onClick={() => handleResultPanelCollapse(false)}
           title="Expand results"
         >
           <ChevronUp size={20} className="text-text-secondary" />
         </button>
       )}
       <div className="flex items-center bg-bg-secondary border-b border-border px-2 py-0 h-10 shrink-0 gap-2">
-        {!isCollapsed && (
+        {!isResultsPanelCollapsed && (
           <button
             className="p-1 hover:bg-bg-surface rounded transition-colors"
-            onClick={() => setIsCollapsed(true)}
+            onClick={() => handleResultPanelCollapse(true)}
             title="Collapse results"
           >
             <ChevronDown size={16} className="text-text-secondary" />
@@ -91,7 +82,7 @@ export function QueryResultTabs({
                   ? "bg-bg-base border-b-2 border-accent text-text-primary"
                   : "bg-bg-tertiary text-text-secondary hover:bg-bg-base"
               }`}
-              onClick={() => onSelectTab(tab.id)}
+              onClick={() => setActive(tab.id)}
             >
               <span className="text-xs font-mono truncate max-w-xs">
                 {tab.title}
@@ -103,7 +94,7 @@ export function QueryResultTabs({
                 className="p-1 hover:bg-bg-secondary rounded transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onCloseTab(tab.id);
+                  closeTab(tab.id);
                 }}
               >
                 <X size={14} />
@@ -115,7 +106,7 @@ export function QueryResultTabs({
         {tabs.length > 0 && (
           <button
             className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary rounded transition-colors hover:bg-bg-base shrink-0"
-            onClick={onCloseAll}
+            onClick={closeAllTabs}
           >
             Close All
           </button>
@@ -128,13 +119,12 @@ export function QueryResultTabs({
             queryResult={activeTab.result}
             loading={activeTab.loading}
             error={activeTab.error}
-            connectionString={connectionString}
             tableName={extractTableNameFromQuery(activeTab.query)}
             columnsMeta={getColumnsMeta(
               schema,
               extractTableNameFromQuery(activeTab.query),
             )}
-            onSaveSuccess={onRefreshQuery}
+            onSaveSuccess={rerunActiveTab}
           />
         ) : (
           <div className="flex items-center justify-center h-full bg-bg-base">

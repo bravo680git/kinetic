@@ -1,27 +1,31 @@
 import Editor from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
-import { useEffect, useRef, useState } from "react";
-import { SchemaResponse } from "../../../shared/types";
+import { useEffect, useRef } from "react";
 import { createSqlCompletionProvider } from "../lib/monacoProvider";
+import { useSnippets } from "../hooks/useSnippets";
+import { useSchemaStore } from "../stores/schema";
+import { useQueryTabsStore } from "../stores/queryTabs";
 
-interface SqlEditorProps {
-  onRun: (query: string) => void;
-  schema: SchemaResponse | null;
-}
-
-export function SqlEditor({ onRun, schema }: SqlEditorProps) {
-  const [value, setValue] = useState("");
+export function SqlEditor() {
+  const schema = useSchemaStore((state) => state.schema);
+  const { runQueryInTab } = useQueryTabsStore();
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const schemaRef = useRef<SchemaResponse | null>(schema);
-  const onRunRef = useRef(onRun);
+  const schemaRef = useRef(schema);
+  const runQueryRef = useRef(runQueryInTab);
+  const { snippets } = useSnippets();
+  const snippetsRef = useRef(snippets);
 
   useEffect(() => {
-    onRunRef.current = onRun;
-  }, [onRun]);
+    runQueryRef.current = runQueryInTab;
+  }, [runQueryInTab]);
 
   useEffect(() => {
     schemaRef.current = schema;
   }, [schema]);
+
+  useEffect(() => {
+    snippetsRef.current = snippets;
+  }, [snippets]);
 
   const handleMount = (
     editor: monaco.editor.IStandaloneCodeEditor,
@@ -56,6 +60,7 @@ export function SqlEditor({ onRun, schema }: SqlEditorProps) {
     // Register completion provider
     const completionProvider = createSqlCompletionProvider(
       () => schemaRef.current,
+      () => snippetsRef.current,
     );
     monacoEditor.languages.registerCompletionItemProvider(
       "sql",
@@ -81,7 +86,7 @@ export function SqlEditor({ onRun, schema }: SqlEditorProps) {
         }
 
         if (query) {
-          onRunRef.current(query);
+          runQueryRef.current(query);
         }
       },
     );
@@ -93,8 +98,6 @@ export function SqlEditor({ onRun, schema }: SqlEditorProps) {
         height="100%"
         language="sql"
         theme="vs-dark"
-        value={value}
-        onChange={(val) => setValue(val || "")}
         onMount={handleMount}
         options={{
           minimap: { enabled: false },

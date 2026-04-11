@@ -116,6 +116,12 @@ export interface Config {
 }
 
 /**
+ * Snippets configuration
+ * Request/Response for GET/POST /api/snippets
+ */
+export type SnippetsConfig = Record<string, string>;
+
+/**
  * Generic API error envelope
  */
 export interface ApiError {

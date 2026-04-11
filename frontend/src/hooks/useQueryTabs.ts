@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { QueryResponse } from "../../../shared/types";
 import { executeQuery } from "../lib/api";
-import type { QueryTab } from "../types/tabs";
+import { QueryTab } from "@/stores/queryTabs";
 
 export function useQueryTabs() {
   const [tabs, setTabs] = useState<QueryTab[]>([]);

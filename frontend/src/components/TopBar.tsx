@@ -1,30 +1,37 @@
 import clsx from "clsx";
-import { PanelLeft, PanelRight, Settings } from "lucide-react";
+import { PanelLeft, PanelRight, Settings, Code2 } from "lucide-react";
+import { useUIStore } from "../stores/ui";
+import { useSettingStore } from "@/stores/setting";
+import { useSettings } from "@/hooks/useSettings";
 
-interface TopBarProps {
-  connectionStatus: "connected" | "disconnected" | "error";
-  onSettingsClick?: () => void;
-  isSidebarCollapsed?: boolean;
-  setIsSidebarCollapsed?: (collapsed: boolean) => void;
-}
+interface TopBarProps {}
 
-export function TopBar({
-  connectionStatus,
-  onSettingsClick,
-  isSidebarCollapsed,
-  setIsSidebarCollapsed,
-}: TopBarProps) {
+export function TopBar({}: TopBarProps) {
+  const connectionStatus = "error";
+  const { openSnippetsModal, openSettingsModal } = useUIStore();
+  const isSidebarCollapsed = useSettingStore(
+    (state) => state.config.general?.sidebar_collapsed ?? false,
+  );
+  const { updateConfig } = useSettings();
   const statusColors = {
     connected: "bg-success",
     disconnected: "bg-gray-500",
     error: "bg-error",
   };
 
+  const handleSidebarCollapse = (collapsed: boolean) => {
+    updateConfig({
+      general: {
+        sidebar_collapsed: collapsed,
+      },
+    });
+  };
+
   return (
     <div className="flex items-center justify-between pl-2 pr-4 py-3 bg-bg-surface border-b border-border">
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setIsSidebarCollapsed?.(!isSidebarCollapsed)}
+          onClick={() => handleSidebarCollapse(!isSidebarCollapsed)}
           className={clsx(
             "p-1 hover:bg-bg-elevated rounded-md transition-colors text-text-secondary z-10",
           )}
@@ -41,7 +48,7 @@ export function TopBar({
         </span>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <div className="flex items-center gap-2">
           <div
             className={`w-2 h-2 rounded-full ${statusColors[connectionStatus]}`}
@@ -52,7 +59,15 @@ export function TopBar({
         </div>
 
         <button
-          onClick={onSettingsClick}
+          onClick={openSnippetsModal}
+          className="p-2 hover:bg-bg-elevated rounded-md transition-colors"
+          title="Configure Snippets"
+        >
+          <Code2 size={18} className="text-text-secondary" />
+        </button>
+
+        <button
+          onClick={openSettingsModal}
           className="p-2 hover:bg-bg-elevated rounded-md transition-colors"
         >
           <Settings size={18} className="text-text-secondary" />

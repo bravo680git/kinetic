@@ -1,17 +1,18 @@
+import { useConnectionStore } from "@/stores/connection";
 import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
   ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useMemo, useRef, useState, useEffect, useCallback, memo } from "react";
-import { AlertCircle, Loader, Check, X, Key } from "lucide-react";
+import { AlertCircle, Check, Key, Loader, X } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import {
+  ColumnMeta,
   QueryResponse,
   UpdateRowRequest,
-  ColumnMeta,
 } from "../../../shared/types";
 import { updateRow } from "../lib/api";
 
@@ -19,7 +20,6 @@ interface ResultGridProps {
   queryResult: QueryResponse | null;
   loading: boolean;
   error: string | null;
-  connectionString: string;
   tableName?: string;
   columnsMeta?: Record<string, ColumnMeta> | null;
   onSaveSuccess?: () => void;
@@ -232,11 +232,11 @@ export function ResultGrid({
   queryResult,
   loading,
   error,
-  connectionString,
   tableName,
   columnsMeta,
   onSaveSuccess,
 }: ResultGridProps) {
+  const connectionString = useConnectionStore((state) => state.connStr);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [editingData, setEditingData] = useState<Map<string, EditCellData>>(
     new Map(),
