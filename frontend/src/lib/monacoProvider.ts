@@ -1,11 +1,29 @@
 import { EntityContextType, PostgreSQL } from "dt-sql-parser";
 import * as monaco from "monaco-editor";
 import { SchemaResponse } from "../../../shared/types";
+import { getCategoryFromKey, sqlSnippets } from "../../../shared/sqlSnippets";
 
 export function createSqlCompletionProvider(
   getSchema: () => SchemaResponse | null,
 ): monaco.languages.CompletionItemProvider {
   const parser = new PostgreSQL();
+
+  // Prepare snippets for autocomplete
+  const snippetSuggestions = Object.entries(sqlSnippets).map(([key, value]) => {
+    const category = getCategoryFromKey(key);
+    return {
+      label: key,
+      kind: monaco.languages.CompletionItemKind.Snippet,
+      detail: category,
+      insertText: value,
+      insertTextRules:
+        monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+      documentation: {
+        value: `**${category}**\n\n\`\`\`sql\n${value}\n\`\`\``,
+      },
+      sortText: `0_${key}`, // Show snippets first (0 prefix sorts before 1 and 2)
+    };
+  });
 
   return {
     triggerCharacters: [".", " ", "(", ","],
@@ -110,6 +128,13 @@ export function createSqlCompletionProvider(
               }
             }
           }
+          // Add snippets even when dot-triggered
+          for (const snippet of snippetSuggestions) {
+            suggestions.push({
+              ...snippet,
+              range: replaceRange,
+            });
+          }
           return { suggestions, incomplete: false };
         }
 
@@ -178,6 +203,15 @@ export function createSqlCompletionProvider(
               sortText: `2_${keyword}`,
             });
           }
+        }
+
+        // ============ Add SQL snippets ============
+        // Always add snippets to suggestions
+        for (const snippet of snippetSuggestions) {
+          suggestions.push({
+            ...snippet,
+            range: replaceRange,
+          });
         }
 
         return {
