@@ -1,9 +1,9 @@
+import { useSchema } from "@/hooks/useSchema";
+import { useQueryTabs } from "@/hooks/useQueryTabs";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import type { ColumnMeta, SchemaResponse } from "../../../shared/types";
 import { extractTableNameFromQuery } from "../lib/query";
 import { useUIStore } from "../stores/ui";
-import { useSchemaStore } from "../stores/schema";
-import { useQueryTabsStore } from "../stores/queryTabs";
 import { ResultGrid } from "./ResultGrid";
 
 function getColumnsMeta(
@@ -28,11 +28,15 @@ function getColumnsMeta(
 }
 
 export function QueryResultTabs() {
-  const tabs = useQueryTabsStore((state) => state.tabs);
-  const activeTabId = useQueryTabsStore((state) => state.activeTabId);
-  const { setActive, closeTab, closeAllTabs, rerunActiveTab } =
-    useQueryTabsStore();
-  const schema = useSchemaStore((state) => state.schema);
+  const {
+    tabs,
+    activeTabId,
+    setActive,
+    closeTab,
+    closeAllTabs,
+    rerunActiveTab,
+  } = useQueryTabs();
+  const { schema } = useSchema();
   const activeTab = tabs.find((t) => t.id === activeTabId) || null;
 
   const { isResultsPanelCollapsed, setResultsPanelCollapsed } = useUIStore();

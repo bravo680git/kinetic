@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Edit2, MoreVertical, Plug, Trash2 } from "lucide-react";
-import { type SavedConnection } from "../lib/connections";
+import { type SavedConnection } from "../stores/connection";
 
 interface ConnectionMenuProps {
   connection: SavedConnection;

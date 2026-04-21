@@ -1,7 +1,28 @@
 import { EntityContextType, PostgreSQL } from "dt-sql-parser";
 import * as monaco from "monaco-editor";
 import { SchemaResponse, SnippetsConfig } from "../../../shared/types";
-import { getCategoryFromKey } from "../../../shared/sqlSnippets";
+
+function getCategoryFromKey(key: string): string {
+  if (key.startsWith("SELECT")) return "SELECT";
+  if (key.startsWith("CREATE_TABLE")) return "CREATE TABLE";
+  if (key.startsWith("CREATE_")) return "CREATE";
+  if (key.startsWith("INSERT")) return "INSERT";
+  if (key.startsWith("UPDATE")) return "UPDATE";
+  if (key.startsWith("DELETE")) return "DELETE";
+  if (key.startsWith("ALTER")) return "ALTER";
+  if (key.startsWith("DROP")) return "DROP";
+  if (key.startsWith("TRUNCATE")) return "TRUNCATE";
+  if (key.startsWith("TRANSACTION")) return "TRANSACTION";
+  if (key.startsWith("VIEW") || key.startsWith("CREATE_VIEW")) return "VIEW";
+  if (key.startsWith("STORED_PROCEDURE") || key.startsWith("CREATE_STORED"))
+    return "STORED PROCEDURE";
+  if (key.startsWith("TRIGGER") || key.startsWith("CREATE_TRIGGER"))
+    return "TRIGGER";
+  if (key.startsWith("FUNCTION")) return "FUNCTION";
+  if (key.startsWith("BACKUP") || key.startsWith("RESTORE"))
+    return "BACKUP/RESTORE";
+  return "OTHER";
+}
 
 function buildSnippetSuggestions(
   snippets: SnippetsConfig,

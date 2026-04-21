@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import { ConnectionModal } from "./components/ConnectionModal";
+import { JsonViewerModal } from "./components/JsonViewerModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { SnippetsConfigModal } from "./components/SnippetsConfigModal";
 import { TopBar } from "./components/TopBar";
@@ -44,6 +45,7 @@ function App() {
         <ConnectionModal />
         <SettingsModal />
         <SnippetsConfigModal />
+        <JsonViewerModal />
         <ToastContainer
           position="bottom-right"
           autoClose={3000}

@@ -1,13 +1,13 @@
 import { ConnectionsList } from "@/components/ConnectionsList";
 import { SchemaTree } from "@/components/SchemaTree";
+import { useSchema } from "@/hooks/useSchema";
 import { useSettingStore } from "@/stores/setting";
-import { useSchemaStore } from "@/stores/schema";
 
 const Sidebar: React.FC = () => {
   const isSidebarCollapsed = useSettingStore(
     (state) => state.config.general?.sidebar_collapsed ?? false,
   );
-  const schema = useSchemaStore((state) => state.schema);
+  const { schema } = useSchema();
 
   return (
     <div

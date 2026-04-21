@@ -1,9 +1,14 @@
 import { create } from "zustand";
-import { SavedConnection } from "../lib/connections";
+import { SavedConnection } from "./connection";
 
 type ConnectionModalState = {
   mode: "add" | "edit";
   connection: SavedConnection | null;
+};
+
+type JsonViewerModalState = {
+  value: unknown;
+  onSave?: (newValue: string) => void;
 };
 
 type UIState = {
@@ -13,6 +18,7 @@ type UIState = {
   // Modals
   settingsModalOpen: boolean;
   snippetsModalOpen: boolean;
+  jsonViewerModal: JsonViewerModalState | null;
   // Panels
   isResultsPanelCollapsed: boolean;
   // Actions
@@ -26,6 +32,11 @@ type UIState = {
   closeSettingsModal: () => void;
   openSnippetsModal: () => void;
   closeSnippetsModal: () => void;
+  openJsonViewerModal: (
+    value: unknown,
+    onSave?: (newValue: string) => void,
+  ) => void;
+  closeJsonViewerModal: () => void;
   setResultsPanelCollapsed: (collapsed: boolean) => void;
 };
 
@@ -34,6 +45,7 @@ export const useUIStore = create<UIState>((set) => ({
   connectionModal: null,
   settingsModalOpen: false,
   snippetsModalOpen: false,
+  jsonViewerModal: null,
   isResultsPanelCollapsed: false,
 
   setIsSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
@@ -53,6 +65,9 @@ export const useUIStore = create<UIState>((set) => ({
   closeSettingsModal: () => set({ settingsModalOpen: false }),
   openSnippetsModal: () => set({ snippetsModalOpen: true }),
   closeSnippetsModal: () => set({ snippetsModalOpen: false }),
+  openJsonViewerModal: (value, onSave) =>
+    set({ jsonViewerModal: { value, onSave } }),
+  closeJsonViewerModal: () => set({ jsonViewerModal: null }),
   setResultsPanelCollapsed: (collapsed) =>
     set({ isResultsPanelCollapsed: collapsed }),
 }));

@@ -1,35 +1,27 @@
+import { useSchema } from "@/hooks/useSchema";
+import { useConnection } from "@/hooks/useConnection";
+import { useUIStore } from "@/stores/ui";
 import clsx from "clsx";
 import { ChevronRight, Plug, PlugIcon, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import { useConfirmModal } from "../hooks/useConfirmModal";
-import {
-  deleteConnection,
-  getSavedConnections,
-  type SavedConnection,
-} from "../lib/connections";
+import { type SavedConnection } from "../stores/connection";
 import { ConnectionMenu } from "./ConnectionMenu";
-import { useUIStore } from "@/stores/ui";
-import { useConnectionStore } from "@/stores/connection";
-import { useSchemaStore } from "@/stores/schema";
 
 export function ConnectionsList() {
   const [expanded, setExpanded] = useState(true);
-  const [connections, setConnections] = useState(getSavedConnections());
   const { modal: deleteModal, contextHolder } = useConfirmModal();
   const { openConnectionModal } = useUIStore();
+  const { connect } = useSchema();
   const {
-    refreshKey,
-    selectedConn,
-    setSelectedConn,
-    setConnStr,
+    connections,
+    selectedConnection,
+    selectConnection,
     triggerRefresh,
-  } = useConnectionStore();
-  const selectedConnId = selectedConn?.id || null;
-
-  useEffect(() => {
-    setConnections(getSavedConnections());
-  }, [refreshKey]);
+    deleteConnection,
+  } = useConnection();
+  const selectedConnId = selectedConnection?.id || null;
 
   const handleDeleteConnection = (id: string) => {
     deleteModal.confirm({
@@ -40,17 +32,14 @@ export function ConnectionsList() {
       type: "error",
       onConfirm: () => {
         deleteConnection(id);
-        setConnections(getSavedConnections());
       },
     });
   };
 
   const handleConnect = async (conn: SavedConnection) => {
-    setSelectedConn(conn);
-    const { connect } = useSchemaStore.getState();
     try {
       await connect(conn.connectionString);
-      setConnStr(conn.connectionString);
+      selectConnection(conn);
       triggerRefresh();
       toast.success(`Connected to ${conn.name}`);
     } catch (err) {

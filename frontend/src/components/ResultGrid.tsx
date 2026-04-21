@@ -6,7 +6,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { AlertCircle, Check, Key, Loader, X } from "lucide-react";
+import { AlertCircle, Check, Eye, Key, Loader, X } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import {
@@ -15,6 +15,7 @@ import {
   UpdateRowRequest,
 } from "../../../shared/types";
 import { updateRow } from "../lib/api";
+import { useUIStore } from "../stores/ui";
 
 interface ResultGridProps {
   queryResult: QueryResponse | null;
@@ -38,6 +39,67 @@ interface EditedRow {
   changes: Record<string, unknown>;
 }
 
+// Helper function to check if a column is JSON or JSONB type
+function isJsonColumn(
+  colName: string,
+  columnsMeta: Record<string, ColumnMeta> | null | undefined,
+): boolean {
+  if (!columnsMeta || !columnsMeta[colName]) return false;
+  const colType = columnsMeta[colName].type?.toLowerCase() || "";
+  return colType === "json" || colType === "jsonb";
+}
+
+// Check if a string looks like base64
+function isBase64String(str: string): boolean {
+  if (str.length <= 20) return false;
+  return /^[A-Za-z0-9+/\-_]*={0,2}$/.test(str);
+}
+
+// Decode base64-encoded JSON if needed
+function decodeJsonValue(value: unknown): string {
+  if (value === null || value === undefined) return "null";
+
+  const str = String(value).trim();
+
+  // Try to decode as base64 if it looks like base64
+  if (isBase64String(str)) {
+    try {
+      const decoded = atob(str);
+      // Return decoded value (already JSON)
+      return decoded;
+    } catch {
+      // Not valid base64, return original
+      return str;
+    }
+  }
+
+  return str;
+}
+
+// Encode JSON to base64 if the original was base64
+function encodeJsonValue(value: string, originalValue: unknown): string {
+  const originalStr = String(originalValue).trim();
+
+  // If original was base64, encode the new value
+  if (isBase64String(originalStr)) {
+    try {
+      return btoa(value);
+    } catch {
+      // If encoding fails, return the value as-is
+      return value;
+    }
+  }
+
+  // Original was not base64, return as-is
+  return value;
+}
+
+// Truncate string for display if it's too long
+function truncateString(str: string, maxLength: number = 60): string {
+  if (str.length <= maxLength) return str;
+  return str.substring(0, maxLength) + "...";
+}
+
 interface EditableCellProps {
   value: unknown;
   rowIndex: number;
@@ -45,6 +107,8 @@ interface EditableCellProps {
   isEditing: boolean;
   hasEdit: boolean;
   editValue: string;
+  isJsonColumn: boolean;
+  columnsMeta?: Record<string, ColumnMeta> | null;
   onCellClick: (e: React.MouseEvent, rowIndex: number, colName: string) => void;
   onCellChange: (rowIndex: number, colName: string, value: string) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
@@ -57,11 +121,14 @@ const EditableCell = memo(function EditableCell({
   isEditing,
   hasEdit,
   editValue,
+  isJsonColumn,
+  columnsMeta,
   onCellClick,
   onCellChange,
   onKeyDown,
 }: EditableCellProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const { openJsonViewerModal } = useUIStore();
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -83,24 +150,52 @@ const EditableCell = memo(function EditableCell({
   }
 
   const displayValue = hasEdit ? editValue : value;
+  let displayStr = String(displayValue);
+
+  // Decode base64-encoded JSON for display
+  if (isJsonColumn && !hasEdit) {
+    displayStr = decodeJsonValue(displayValue);
+  }
+
+  const truncatedStr = isJsonColumn
+    ? truncateString(displayStr, 60)
+    : displayStr;
 
   return (
-    <span
-      onMouseDown={(e) => onCellClick(e, rowIndex, colName)}
-      className={`text-xs font-mono cursor-cell px-1 py-0.5 rounded transition-colors block ${
+    <div
+      className={`text-xs font-mono cursor-cell px-1 py-0.5 rounded transition-colors flex items-center gap-1.5 ${
         hasEdit
           ? "bg-accent/20 text-accent font-semibold"
           : "hover:bg-accent/10"
       }`}
     >
-      {displayValue === null ? (
-        <span className="text-text-secondary italic">null</span>
-      ) : displayValue === "null" ? (
-        <span className="text-text-secondary italic">null</span>
-      ) : (
-        String(displayValue)
+      <span
+        onMouseDown={(e) => onCellClick(e, rowIndex, colName)}
+        className="flex-1 block truncate"
+      >
+        {displayValue === null ? (
+          <span className="text-text-secondary italic">null</span>
+        ) : displayValue === "null" ? (
+          <span className="text-text-secondary italic">null</span>
+        ) : (
+          truncatedStr
+        )}
+      </span>
+      {isJsonColumn && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            openJsonViewerModal(value, (newValue) => {
+              onCellChange(rowIndex, colName, newValue);
+            });
+          }}
+          className="p-0.5 hover:bg-accent/20 rounded transition-colors shrink-0"
+          title="View JSON"
+        >
+          <Eye size={14} className="text-accent" />
+        </button>
       )}
-    </span>
+    </div>
   );
 });
 
@@ -236,7 +331,9 @@ export function ResultGrid({
   columnsMeta,
   onSaveSuccess,
 }: ResultGridProps) {
-  const connectionString = useConnectionStore((state) => state.connStr);
+  const connectionString = useConnectionStore(
+    (state) => state.selectedConnection?.connectionString,
+  );
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [editingData, setEditingData] = useState<Map<string, EditCellData>>(
     new Map(),
@@ -269,7 +366,15 @@ export function ResultGrid({
     const edit = editingData.get(key);
     if (edit) return edit.newValue;
     const originalValue = queryResult?.rows[rowIndex]?.[colName];
-    return originalValue === null ? "null" : String(originalValue ?? "");
+    const stringValue =
+      originalValue === null ? "null" : String(originalValue ?? "");
+
+    // For JSON columns, decode base64 if needed
+    if (isJsonColumn(colName, columnsMeta)) {
+      return decodeJsonValue(stringValue);
+    }
+
+    return stringValue;
   };
 
   const handleCellChange = useCallback(
@@ -307,6 +412,11 @@ export function ResultGrid({
       return;
     }
 
+    if (!connectionString) {
+      setEditingError("No active connection");
+      return;
+    }
+
     if (!pkColumn) {
       setEditingError("Please select a primary key column");
       return;
@@ -326,16 +436,23 @@ export function ResultGrid({
       editingData.forEach(({ rowIndex, colName, newValue }) => {
         const row = rowsToUpdate.get(rowIndex);
         const pkValue = queryResult.rows[rowIndex]?.[pkColumn];
+        const originalValue = queryResult.rows[rowIndex]?.[colName];
+
+        // For JSON columns, encode back to base64 if original was base64
+        let finalValue = newValue;
+        if (isJsonColumn(colName, columnsMeta)) {
+          finalValue = encodeJsonValue(newValue, originalValue);
+        }
 
         if (!row) {
           rowsToUpdate.set(rowIndex, {
             rowIndex,
             pkColumn,
             pkValue,
-            changes: { [colName]: parseValue(newValue) },
+            changes: { [colName]: parseValue(finalValue) },
           });
         } else {
-          row.changes[colName] = parseValue(newValue);
+          row.changes[colName] = parseValue(finalValue);
         }
       });
 
@@ -413,6 +530,7 @@ export function ResultGrid({
           const isEditing =
             editingCell?.rowIndex === rowIndex && editingCell?.colName === col;
           const hasEdit = editingData.has(cellKey);
+          const isJson = isJsonColumn(col, columnsMeta);
 
           return (
             <EditableCell
@@ -422,6 +540,8 @@ export function ResultGrid({
               isEditing={isEditing}
               hasEdit={hasEdit}
               editValue={getEditValue(rowIndex, col)}
+              isJsonColumn={isJson}
+              columnsMeta={columnsMeta}
               onCellClick={handleCellClick}
               onCellChange={handleCellChange}
               onKeyDown={handleInputKeyDown}
@@ -433,6 +553,7 @@ export function ResultGrid({
       queryResult?.columns,
       editingCell,
       editingData,
+      columnsMeta,
       handleCellClick,
       handleCellChange,
       handleInputKeyDown,

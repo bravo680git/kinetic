@@ -1,20 +1,40 @@
 import { create } from "zustand";
-import { SavedConnection } from "../lib/connections";
+import { persist } from "zustand/middleware";
+
+export interface SavedConnection {
+  id: string;
+  name: string;
+  connectionString: string;
+  createdAt: number;
+}
 
 type ConnectionState = {
-  connStr: string;
-  selectedConn: SavedConnection | null;
+  connections: SavedConnection[];
+  selectedConnection: SavedConnection | null;
   refreshKey: number;
-  setConnStr: (connStr: string) => void;
-  setSelectedConn: (conn: SavedConnection | null) => void;
-  triggerRefresh: () => void;
+  setConnections: (connections: SavedConnection[]) => void;
+  setSelectedConnection: (selectedConnection: SavedConnection | null) => void;
+  setRefreshKey: (refreshKey: number) => void;
 };
 
-export const useConnectionStore = create<ConnectionState>((set) => ({
-  connStr: "",
-  selectedConn: null,
-  refreshKey: 0,
-  setConnStr: (connStr) => set({ connStr }),
-  setSelectedConn: (conn) => set({ selectedConn: conn }),
-  triggerRefresh: () => set((state) => ({ refreshKey: state.refreshKey + 1 })),
-}));
+export const useConnectionStore = create<ConnectionState>()(
+  persist(
+    (set) => ({
+      connections: [],
+      selectedConnection: null,
+      refreshKey: 0,
+
+      setConnections: (connections) => set({ connections }),
+      setSelectedConnection: (selectedConnection) =>
+        set({ selectedConnection }),
+      setRefreshKey: (refreshKey) => set({ refreshKey }),
+    }),
+    {
+      name: "kinetic_connections",
+      partialize: (state) => ({
+        connections: state.connections,
+        selectedConnection: state.selectedConnection,
+      }),
+    },
+  ),
+);

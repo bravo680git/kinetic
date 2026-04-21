@@ -1,20 +1,17 @@
+import { useSchema } from "@/hooks/useSchema";
+import { useConnection } from "@/hooks/useConnection";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AlertCircle, CheckCircle, XIcon, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { testConnection as testConnectionApi } from "../lib/api";
-import {
-  deleteConnection,
-  saveConnection,
-  type SavedConnection,
-} from "../lib/connections";
 import { useUIStore } from "../stores/ui";
-import { useConnectionStore } from "@/stores/connection";
-import { useSchemaStore } from "@/stores/schema";
 
 export function ConnectionModal() {
   const { connectionModal, closeConnectionModal } = useUIStore();
-  const { triggerRefresh, setConnStr: storeSetConnStr } = useConnectionStore();
+  const { connect } = useSchema();
+  const { triggerRefresh, selectConnection, deleteConnection, saveConnection } =
+    useConnection();
   const isOpen = connectionModal !== null;
   const mode = connectionModal?.mode || "add";
   const connection = connectionModal?.connection || null;
@@ -57,8 +54,6 @@ export function ConnectionModal() {
     }
   };
 
-  const handleSave = async () => {};
-
   const handleConnect = async () => {
     if (!connStr) {
       return;
@@ -66,12 +61,11 @@ export function ConnectionModal() {
     if (mode === "edit" && connection) {
       deleteConnection(connection.id);
     }
-    saveConnection(displayName, connStr);
+    const savedConnection = saveConnection(displayName, connStr);
     if (mode === "add") {
-      const { connect } = useSchemaStore.getState();
       try {
         await connect(connStr);
-        storeSetConnStr(connStr);
+        selectConnection(savedConnection);
         triggerRefresh();
         toast.success(`Connected to ${displayName || "database"}`);
       } catch (err) {

@@ -1,14 +1,14 @@
+import { useSchema } from "@/hooks/useSchema";
+import { useQueryTabs } from "@/hooks/useQueryTabs";
 import Editor from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
-import { createSqlCompletionProvider } from "../lib/monacoProvider";
 import { useSnippets } from "../hooks/useSnippets";
-import { useSchemaStore } from "../stores/schema";
-import { useQueryTabsStore } from "../stores/queryTabs";
+import { createSqlCompletionProvider } from "../lib/monacoProvider";
 
 export function SqlEditor() {
-  const schema = useSchemaStore((state) => state.schema);
-  const { runQueryInTab } = useQueryTabsStore();
+  const { schema } = useSchema();
+  const { runQueryInTab } = useQueryTabs();
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const schemaRef = useRef(schema);
   const runQueryRef = useRef(runQueryInTab);
