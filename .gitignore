@@ -16,5 +16,4 @@ dist/
 /frontend/src/**/*.js
 /backend/src/**/*.js
 /shared/**/*.js
-go.sum
 /backend/tmp/
