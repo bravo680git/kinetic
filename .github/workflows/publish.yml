@@ -58,3 +58,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Notify to Telegram
+        if: always()
+        uses: bravo680git/tele-notify@v1
+        with:
+          token: ${{ secrets.TELE_TOKEN }}
+          to: ${{ secrets.TELE_CHANNEL_ID }}
